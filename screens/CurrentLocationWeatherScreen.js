@@ -1,5 +1,6 @@
     import React, { useEffect, useState } from 'react';
     import { View, Text, StyleSheet } from 'react-native';
+    import { Card, Title, Paragraph } from 'react-native-paper'; 
     import * as Location from 'expo-location';
     import { fetchWeatherData } from '../components/api'; // Import the fetchWeatherData function
 
@@ -49,7 +50,7 @@
     if (errorMsg) {
         return (
         <View style={styles.container}>
-            <Text>{errorMsg}</Text>
+            <Text style={styles.error}>{errorMsg}</Text>
         </View>
         );
     }
@@ -57,8 +58,12 @@
     // Render weather data
     return (
         <View style={styles.container}>
-        <Text>Current Weather:</Text>
-        <Text>Temperature: {weatherData.hourly.temperature_2m[0]} °C</Text>
+        <Card style={styles.card}>
+            <Card.Content>
+            <Title>Current Weather</Title>
+            <Paragraph>Temperature: {weatherData.hourly.temperature_2m[0]} °C</Paragraph>
+            </Card.Content>
+        </Card>
         </View>
     );
     };
@@ -69,6 +74,16 @@
         justifyContent: 'center',
         alignItems: 'center',
     },
+    card: {
+        width: '80%',
+        backgroundColor: '#f0f0f0',
+        padding: 20,
+    },
+    error: {
+        color: 'red',
+        marginTop: 10,
+    },
     });
 
     export default CurrentLocationWeatherScreen;
+        

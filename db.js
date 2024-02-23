@@ -41,13 +41,41 @@
     // Function to save a location to the SQLite database
     export const saveLocationToDB = (city) => {
         return new Promise((resolve, reject) => {
-        db.transaction(tx => {
-            tx.executeSql(
-            'INSERT INTO savedLocations (city) VALUES (?)',
-            [city],
-            (_, result) => resolve(result.insertId), // Return the ID of the inserted row
-            (_, error) => reject(error)
-            );
-        });
+            db.transaction(tx => {
+                // Check if the location already exists in the database
+                tx.executeSql(
+                    'SELECT * FROM savedLocations WHERE city = ?',
+                    [city],
+                    (_, { rows }) => {
+                        if (rows.length > 0) {
+                            // Location already exists, reject the promise
+                            reject('Location already saved');
+                        } else {
+                            // Location does not exist, insert it into the database
+                            tx.executeSql(
+                                'INSERT INTO savedLocations (city) VALUES (?)',
+                                [city],
+                                (_, result) => resolve(result.insertId), // Return the ID of the inserted row
+                                (_, error) => reject(error)
+                            );
+                        }
+                    },
+                    (_, error) => reject(error)
+                );
+            });
         });
     };
+
+    // Function to clear all data from the savedLocations table
+    export const clearDatabase = () => {
+        return new Promise((resolve, reject) => {
+            db.transaction(tx => {
+                tx.executeSql('DELETE FROM savedLocations', [], (_, result) => {
+                    resolve(result);
+                }, (_, error) => {
+                    reject(error);
+                });
+            });
+        });
+    };
+    

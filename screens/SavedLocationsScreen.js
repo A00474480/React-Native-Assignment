@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native'; 
+import { Button, Card, Title, Paragraph } from 'react-native-paper'; // Import components from react-native-paper
 import { fetchSavedLocations, removeSavedLocation } from '../db';
 import { fetchWeatherData, searchLocation } from '../components/api';
 
@@ -20,14 +21,12 @@ const SavedLocationsScreen = () => {
 
             // If no location found, set error message
             if (geocodingData.error) {
-                setErrorMsg('Location not found');
-                return;
+                console.error('Error fetching location data:', geocodingData.error);
+                return location; // Return the location without weather data
             }
 
             // Extract latitude and longitude from the geocoding data
             const { latitude, longitude } = geocodingData.results[0];
-            console.log('Latitude:', latitude);
-            console.log('Longitude:', longitude);
 
             // Fetch weather data using obtained latitude and longitude
             const weatherData = await fetchWeatherData(latitude, longitude);
@@ -58,46 +57,38 @@ const SavedLocationsScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Saved Locations</Text>
+      <Title style={styles.title}>Saved Locations</Title>
       {savedLocations.map(location => (
-        <View key={location.id} style={styles.locationItem}>
-          <Text>{location.city}</Text>
-          
-          {location.weatherData && (
-            <Text>Temperature: {location.weatherData.hourly.temperature_2m[0]}°C</Text>
-          )}
-          <Button
-            title="Remove"
-            onPress={() => handleRemoveLocation(location.id)}
-          />
-        </View>
+        <Card key={location.id} style={styles.card}>
+          <Card.Content>
+            <Title>{location.city}</Title>
+            {location.weatherData && (
+              <Paragraph>Temperature: {location.weatherData.hourly.temperature_2m[0]}°C</Paragraph>
+            )}
+          </Card.Content>
+          <Card.Actions>
+            <Button onPress={() => handleRemoveLocation(location.id)}>Remove</Button>
+          </Card.Actions>
+        </Card>
       ))}
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  locationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: 'lightgray',
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-});
 
+const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 20,
+      backgroundColor: '#f0f0f0',
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 20,
+    },
+    card: {
+      marginBottom: 10,
+    },
+  });
 export default SavedLocationsScreen;

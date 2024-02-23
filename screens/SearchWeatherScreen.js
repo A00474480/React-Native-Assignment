@@ -1,5 +1,6 @@
     import React, { useState, useEffect } from 'react';
     import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
+    import { Card, Title, Paragraph } from 'react-native-paper'; // Import components from react-native-paper
     import { useFocusEffect } from '@react-navigation/native'; 
     import { fetchWeatherData, searchLocation } from '../components/api';
     import { fetchSavedLocations, saveLocationToDB } from '../db';
@@ -35,15 +36,14 @@
         const geocodingData = await searchLocation(query);
 
         // If no location found, set error message
-        if (geocodingData.error) {
+        if (geocodingData.error || geocodingData.results == null) {
             setErrorMsg('Location not found');
+            setWeatherData(null);
             return;
         }
 
         // Extract latitude and longitude from the geocoding data
         const { latitude, longitude } = geocodingData.results[0];
-        console.log('Latitude:', latitude);
-        console.log('Longitude:', longitude);
 
         // Fetch weather data using obtained latitude and longitude
         const data = await fetchWeatherData(latitude, longitude);
@@ -52,23 +52,24 @@
         setWeatherData(data);
         setErrorMsg(null);
         } catch (error) {
-        setErrorMsg('Error fetching weather data');
-        console.error(error);
+            setErrorMsg('Error fetching weather data');
+            console.error(error);
+            setWeatherData(null);
         }
     };
 
     // Function to save the current location to the list of saved locations
     const saveLocation = async () => {
         try {
-        if (savedLocations.includes(query)) { // Check if location is already saved
-            console.log('Location is already saved');
-            return;
-        }
+        // if (savedLocations.includes(query)) { // Check if location is already saved
+        //     console.log('Location is already saved');
+        //     return;
+        // }
         
-        if (savedLocations.length >= 4) { // Check if maximum limit reached
-            console.log('Maximum limit reached');
-            return;
-        }
+        // if (savedLocations.length >= 4) { // Check if maximum limit reached
+        //     console.log('Maximum limit reached');
+        //     return;
+        // }
 
         await saveLocationToDB(query); // Save the location to the database
 
@@ -77,55 +78,79 @@
 
         console.log('Location saved successfully');
         } catch (error) {
-        console.error('Error saving location to database:', error);
-        setErrorMsg('Error saving location');
+        if(error == 'Location already saved')
+            setErrorMsg(error);
+        else
+            console.error('Error saving location to database:', error);
+            setErrorMsg('Error saving location');
         }
     };
 
     return (
         <View style={styles.container}>
-        {/* Input field to enter the location query */}
-        <TextInput
-            style={styles.input}
-            placeholder="Enter location"
-            value={query}
-            onChangeText={setQuery}
-        />
-        {/* Button to initiate the search */}
-        <Button title="Search" onPress={handleSearch} />
-        {/* Display error message if any */}
-        {errorMsg && <Text style={styles.error}>{errorMsg}</Text>}
-        {/* Display weather data if available */}
-        {weatherData && (
-            <View style={styles.weatherContainer}>
-            <Text>Temperature: {weatherData.hourly.temperature_2m[0]}°C</Text>
-            {/* You can add more weather information here */}
-            </View>
-        )}
-        {/* Button to save the current location */}
-        <Button title="Save Location" onPress={saveLocation} disabled={savedLocations.length >= 4} />
+          <View style={styles.inputContainer}>
+            {/* Input field to enter the location query */}
+            <TextInput
+              style={styles.input}
+              placeholder="Enter location"
+              value={query}
+              onChangeText={setQuery}
+            />
+            {/* Button to initiate the search */}
+            <Button title="Search" onPress={handleSearch} />
+          </View>
+          <View style={styles.resultContainer}>
+            {/* Display error message if any */}
+            {errorMsg && <Text style={styles.error}>{errorMsg}</Text>}
+            {/* Display weather data if available */}
+            {weatherData && (
+              <Card style={styles.card}>
+                <Card.Content>
+                  <Title>Weather Information</Title>
+                  <Paragraph>Temperature: {weatherData.hourly.temperature_2m[0]}°C</Paragraph>
+                  {/* You can add more weather information here */}
+                </Card.Content>
+              </Card>
+            )}
+          </View>
+          {/* Button to save the current location */}
+          <Button title="Save Location" onPress={saveLocation} disabled={!weatherData || savedLocations.length >= 4} />
         </View>
-    );
+      );
     };
 
     const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    input: {
-        height: 40,
-        width: '80%',
-        borderColor: 'gray',
-        borderWidth: 1,
-        marginBottom: 20,
-        paddingHorizontal: 10,
-    },
-    error: {
-        color: 'red',
-        marginTop: 10,
-    },
-    });
+        container: {
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 20,
+          backgroundColor: '#f0f0f0',
+        },
+        inputContainer: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: 20,
+        },
+        input: {
+          height: 40,
+          width: '70%',
+          borderColor: 'gray',
+          borderWidth: 1,
+          paddingHorizontal: 10,
+        },
+        resultContainer: {
+          alignItems: 'center',
+          marginBottom: 20,
+        },
+        card: {
+          width: '100%',
+        },
+        error: {
+          color: 'red',
+          marginTop: 10,
+          marginBottom: 10,
+        },
+      });
 
     export default SearchWeatherScreen;
